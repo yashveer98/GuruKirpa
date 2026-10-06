@@ -1,0 +1,41 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: postgres-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: app_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  app:
+    build: .
+    container_name: node-app
+    ports:
+      - "4000:4000"
+    environment:
+      PORT: 4000
+      DATABASE_URL: postgres://postgres:postgres@db:5432/app_db
+      CHOKIDAR_USEPOLLING: "true"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: npm run dev
+    depends_on:
+      - db
+
+  client:
+    build:
+      context: ../GuruKirpaClientApp
+      dockerfile: Dockerfile
+    container_name: react-client
+    ports:
+      - "8080:80"
+    depends_on:
+      - app
+
+volumes:
+  postgres_data:
